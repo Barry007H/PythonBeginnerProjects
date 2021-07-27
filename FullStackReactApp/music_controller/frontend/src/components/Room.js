@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import { Grid, Button, Typography } from "@material-ui/core";
+import CreateRoomPage from "./CreateRoomPage";
 
 export default class Room extends Component {
     constructor(props) {
@@ -6,14 +8,23 @@ export default class Room extends Component {
         this.state = {
             votesToSkip: 2,
             guestCanPause: false,
-            isHost: false
+            isHost: false,
+            showSettings: false
         };
         this.roomCode = this.props.match.params.roomCode;
         this.getRoomDetails();
+        this.leaveRoomButtonPressed = this.leaveRoomButtonPressed.bind(this);
+        this.updateShowSettings = this.updateShowSettings.bind(this);
+        this.renderSettingsButton = this.renderSettingsButton.bind(this);
+        this.renderSettings = this.renderSettings.bind(this);
     }
 
     getRoomDetails() {
-        fetch('/api/get-room' + '?code=' + this.roomCode).then((response) =>  response.json()).then((data) => {
+        fetch('/api/get-room' + '?code=' + this.roomCode).then((response) => {
+            if (!response.ok) {
+                this.props.leaveRoomCallBack();
+                this.props.history.push('/');
+            } return response.json() }).then((data) => {
             this.setState({
                 votesToSkip: data.votes_to_skip,
                 guestCanPause: data.guest_can_pause,
@@ -22,14 +33,55 @@ export default class Room extends Component {
         });
     }
 
-    render() {
+    leaveRoomButtonPressed() {
+        const requestOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json"}
+        }
+        fetch('/api/leave-room', requestOptions).then((response) => {
+            this.props.leaveRoomCallBack();
+            this.props.history.push('/');
+        })
+    }
+
+    updateShowSettings(value) {
+        this.setState({
+            showSettings: value
+        })
+    }
+
+    renderSettings() {
         return (
-            <div>
-                <h3>Room Code {this.roomCode}</h3>
-                <p>Votes: {this.state.votesToSkip}</p>
-                <p>Guests can pause: {this.state.guestCanPause.toString()}</p>
-                <p>Is host: {this.state.isHost.toString()}</p>
-            </div>
+            <Grid container spacing={1}>
+                <Grid item xs={12} align="center">
+                    <CreateRoomPage update={true} votesToSkip={this.state.votesToSkip} guestCanPause={this.state.guestCanPause} roomCode={this.state.roomCode} updateCallBack={() => {} }></CreateRoomPage>
+                </Grid>
+                <Grid item xs={12} align="center">
+                    <Button variant="contained" color="secondary" onClick={() => this.updateShowSettings(false)}>Close</Button>
+                </Grid>
+            </Grid>
+        )
+    }
+
+    renderSettingsButton() {
+        return(
+            <Grid item xs={12} align="center"><Button variant="contained" color="primary" onClick={() => this.updateShowSettings(true)}>Room Settings</Button></Grid>
+        )
+    }
+
+    render() {
+        if (this.state.showSettings){
+            return this.renderSettings();
+        }
+        return (
+            <Grid container spacing={1}>
+                <Grid item xs={12} align="center"><Typography variant="h4" component="h4">Code: {this.roomCode}</Typography></Grid>
+                <Grid item xs={12} align="center"><Typography variant="h6" component="h6">Votes to skip: {this.state.votesToSkip.toString()}</Typography></Grid>
+                <Grid item xs={12} align="center"><Typography variant="h6" component="h6">Guests can pause: {this.state.guestCanPause.toString()}</Typography></Grid>
+                <Grid item xs={12} align="center"><Typography variant="h6" component="h6">Host: {this.state.isHost.toString()}</Typography></Grid>
+                { this.state.isHost ? this.renderSettingsButton() : null }
+                <Grid item xs={12} align="center"><Button variant="contained" color="secondary" onClick={this.leaveRoomButtonPressed}>Leave room</Button></Grid>
+            </Grid>
         );
     }
 }
