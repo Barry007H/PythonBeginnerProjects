@@ -51,7 +51,7 @@ export default class CreateRoomPage extends Component {
     }
 
     render() {
-        return <Grid container spacing={1}>
+        return (<Grid container spacing={1}>
                     <Grid item xs={12} align="center">
                         <Typography component='h4' variant='h4'>
                             Create a new Room
@@ -97,6 +97,7 @@ export default class CreateRoomPage extends Component {
                     <Grid item xs={12} align="center">
                         <Button color="secondary" variant="contained" to="/" component={Link}>Back</Button>
                     </Grid>
-               </Grid>;
+               </Grid>
+        );
     }
 }
